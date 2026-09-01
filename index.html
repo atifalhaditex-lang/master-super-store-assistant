@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>MASTER SUPER STORE</title>
+  <link rel="stylesheet" href="style.css?v=brand-final-2">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg">
+</head>
+<body>
+  <section id="loginScreen" class="login-screen">
+    <div class="auth-stage">
+      <div class="owner-badge" aria-label="Private Store Account">
+        <span class="owner-shine"></span>
+        <span class="owner-monogram">SA</span>
+        <div class="owner-copy">
+          <small>OWNER</small>
+          <strong>SHOUKAT ALI TAHIR</strong>
+        </div>
+        <span class="owner-status">●</span>
+      </div>
+
+      <div class="login-card premium-auth-card">
+        <p class="eyebrow light auth-kicker">KIRYANA STORE MANAGEMENT</p>
+        <h1 id="loginStoreName">MASTER SUPER STORE</h1>
+        <p class="login-sub" id="authSubheading">Secure mobile access for stock, sales, udhar, expenses & profit — from any network.</p>
+
+        <div class="auth-tabs" role="tablist" aria-label="Account access">
+          <button class="auth-tab active" id="loginTab" type="button" data-auth-mode="login">Sign In</button>
+          <button class="auth-tab" id="registerTab" type="button" data-auth-mode="register">Create Account</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>Email Address</label>
+          <input id="loginEmail" type="email" placeholder="name@example.com" autocomplete="email" required>
+          <label>Password</label>
+          <div class="password-wrap">
+            <input id="loginPassword" type="password" placeholder="Enter password" autocomplete="current-password" required minlength="6">
+            <button class="password-toggle" type="button" data-toggle-password="loginPassword">Show</button>
+          </div>
+          <div class="auth-row">
+            <span class="security-note">Private cloud account</span>
+            <span class="security-note">No email confirmation required</span>
+          </div>
+          <button class="primary-btn login-btn auth-main-btn" id="loginSubmit" type="submit"><span>Open Store</span><b>→</b></button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+          <label>Owner Name</label>
+          <input id="registerOwnerName" type="text" placeholder="Owner / account name" autocomplete="name" required>
+
+          <label>Shop Name</label>
+          <input id="registerShopName" type="text" value="MASTER SUPER STORE" placeholder="Enter shop name" required>
+          <small class="field-help">Keep MASTER SUPER STORE or change the shop name here.</small>
+
+          <label>Email Address</label>
+          <input id="registerEmail" type="email" placeholder="name@example.com" autocomplete="email" required>
+
+          <label>Password</label>
+          <div class="password-wrap">
+            <input id="registerPassword" type="password" placeholder="8+ characters" autocomplete="new-password" required minlength="8">
+            <button class="password-toggle" type="button" data-toggle-password="registerPassword">Show</button>
+          </div>
+
+          <label>Confirm Password</label>
+          <div class="password-wrap">
+            <input id="registerPasswordConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" required minlength="8">
+            <button class="password-toggle" type="button" data-toggle-password="registerPasswordConfirm">Show</button>
+          </div>
+
+          <button class="primary-btn login-btn auth-main-btn" id="registerSubmit" type="submit"><span>Create Private Store</span><b>→</b></button>
+        </form>
+
+        <div id="authMessage" class="auth-message" aria-live="polite"></div>
+        <p class="demo-note">Secure login · Cloud synced · Every account keeps separate store data.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="mini-owner premium-owner-box" id="accountIdentity">
+            <span class="owner-glow-icon">SA</span>
+            <div class="owner-copy">
+              <small>OWNER</small>
+              <strong>SHOUKAT ALI TAHIR</strong>
+            </div>
+          </div>
+        </div>
+        <div class="brand-copy">
+          <div class="brand-line"><p class="eyebrow light">SMART RETAIL MANAGEMENT</p><span class="live-dot">LIVE</span></div>
+          <h1 id="headerStoreName">MASTER SUPER STORE</h1>
+          <p id="todayLabel" class="top-date"></p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="syncStatus" class="sync-status" aria-live="polite"><span></span> Cloud</div>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Store settings" title="Store Settings">
+          <span class="gear">⚙</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" data-view="dashboard">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <div class="hero-label"><span class="hero-icon">↗</span><span>Today's Sales</span></div>
+            <strong id="todaySales">Rs 0</strong>
+            <small>Live business performance</small>
+          </div>
+          <div class="hero-divider hero-copy">
+            <div class="hero-label"><span class="hero-icon">◆</span><span>Gross Profit</span></div>
+            <strong id="todayProfit">Rs 0</strong>
+            <small>Sales minus product cost</small>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon">▦</div><div><span>Stock Value</span><strong id="stockValue">Rs 0</strong><small>Current inventory cost</small></div></article>
+          <article class="stat-card"><div class="stat-icon">⇢</div><div><span>Customer Udhar</span><strong id="customerReceivable">Rs 0</strong><small>Amount receivable</small></div></article>
+          <article class="stat-card"><div class="stat-icon">⇠</div><div><span>Supplier Payable</span><strong id="supplierPayable">Rs 0</strong><small>Amount payable</small></div></article>
+          <article class="stat-card"><div class="stat-icon">!</div><div><span>Low Stock</span><strong id="lowStockCount">0 items</strong><small>Needs attention</small></div></article>
+        </div>
+
+        <section class="panel">
+          <div class="section-head"><h2>Quick Entry</h2></div>
+          <div class="quick-grid">
+            <button class="quick-btn udhar-primary" data-open-form="udhar_sale" type="button"><span class="quick-icon">U</span><b>Udhar Sale</b><small>Fast customer entry</small></button>
+            <button class="quick-btn" data-open-form="sale" type="button"><span class="quick-icon">↗</span><b>Cash Sale</b><small>Stock out</small></button>
+            <button class="quick-btn" data-open-form="purchase" type="button"><span class="quick-icon">↓</span><b>Purchase</b><small>Stock in</small></button>
+            <button class="quick-btn" data-open-form="home" type="button"><span class="quick-icon">⌂</span><b>Home Use</b><small>Personal use</small></button>
+            <button class="quick-btn" data-open-form="expense" type="button"><span class="quick-icon">−</span><b>Expense</b><small>Shop expense</small></button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head"><h2>Low Stock</h2><button class="text-btn" data-nav="inventory" type="button">View all</button></div>
+          <div id="lowStockList" class="list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head"><h2>Recent Activity</h2></div>
+          <div id="recentActivity" class="list"></div>
+        </section>
+      </section>
+
+      <section class="view" data-view="inventory">
+        <div class="section-title-row">
+          <div><p class="eyebrow">PRODUCTS</p><h2>Inventory</h2></div>
+          <button class="primary-btn" id="addProductBtn" type="button">+ Product</button>
+        </div>
+        <div class="inventory-tools">
+          <input id="inventorySearch" class="search-input" type="search" placeholder="Search product, category or unit...">
+          <select id="inventoryStatusFilter" class="filter-select compact-filter" aria-label="Inventory status">
+            <option value="active">Active Products</option>
+            <option value="inactive">Inactive Products</option>
+            <option value="all">All Products</option>
+          </select>
+        </div>
+        <div id="inventoryList" class="stack"></div>
+      </section>
+
+      <section class="view" data-view="transactions">
+        <div class="section-title-row"><div><p class="eyebrow">SHOP ACTIVITY</p><h2>Transactions</h2></div></div>
+        <div class="quick-grid entry-grid">
+          <button class="quick-btn udhar-primary" data-open-form="udhar_sale" type="button"><span class="quick-icon">U</span><b>Udhar Sale</b><small>Fast customer entry</small></button>
+          <button class="quick-btn" data-open-form="sale" type="button"><span class="quick-icon">↗</span><b>Cash Sale</b><small>Stock out</small></button>
+          <button class="quick-btn" data-open-form="purchase" type="button"><span class="quick-icon">↓</span><b>Purchase</b><small>Stock in</small></button>
+          <button class="quick-btn" data-open-form="home" type="button"><span class="quick-icon">⌂</span><b>Home Use</b><small>Personal use</small></button>
+          <button class="quick-btn" data-open-form="loss" type="button"><span class="quick-icon">!</span><b>Loss</b><small>Damage / waste</small></button>
+          <button class="quick-btn" data-open-form="expense" type="button"><span class="quick-icon">−</span><b>Expense</b><small>Shop expense</small></button>
+          <button class="quick-btn" data-open-form="adjustment" type="button"><span class="quick-icon">±</span><b>Adjust</b><small>Stock count</small></button>
+        </div>
+        <select id="transactionFilter" class="filter-select">
+          <option value="all">All Activity</option>
+          <option value="sale">Sales</option>
+          <option value="purchase">Purchases</option>
+          <option value="home">Home Use</option>
+          <option value="loss">Loss</option>
+          <option value="expense">Expenses</option>
+          <option value="adjustment">Adjustments</option>
+        </select>
+        <div id="transactionList" class="stack"></div>
+      </section>
+
+      <section class="view" data-view="khata">
+        <div class="section-title-row">
+          <div><p class="eyebrow">UDHAR</p><h2>Customer Khata</h2></div>
+          <div class="head-actions"><button class="secondary-btn compact-action" data-open-form="udhar_sale" type="button">+ Udhar Sale</button><button class="primary-btn compact-action" id="addCustomerBtn" type="button">+ Customer</button></div>
+        </div>
+        <div class="stats-grid two">
+          <article class="stat-card"><span>Total Udhar</span><strong id="khataTotal">Rs 0</strong></article>
+          <article class="stat-card"><span>Customers</span><strong id="customerCount">0</strong></article>
+        </div>
+        <div id="customerList" class="stack"></div>
+
+        <div class="section-title-row suppliers-title">
+          <div><p class="eyebrow">WHOLESALERS</p><h2>Suppliers</h2></div>
+          <button class="primary-btn" id="addSupplierBtn" type="button">+ Supplier</button>
+        </div>
+        <div id="supplierList" class="stack"></div>
+      </section>
+
+      <section class="view" data-view="reports">
+        <div class="section-title-row"><div><p class="eyebrow">BUSINESS SUMMARY</p><h2>Reports</h2></div></div>
+        <div class="period-tabs">
+          <button class="period active" data-period="today" type="button">Today</button>
+          <button class="period" data-period="month" type="button">Month</button>
+          <button class="period" data-period="all" type="button">All Time</button>
+        </div>
+        <div class="report-grid">
+          <article class="report-card"><span>Sales</span><strong id="reportSales">Rs 0</strong></article>
+          <article class="report-card"><span>Gross Profit</span><strong id="reportGross">Rs 0</strong></article>
+          <article class="report-card"><span>Expenses</span><strong id="reportExpenses">Rs 0</strong></article>
+          <article class="report-card"><span>Net Profit</span><strong id="reportNet">Rs 0</strong></article>
+          <article class="report-card"><span>Home Use</span><strong id="reportHome">Rs 0</strong></article>
+          <article class="report-card"><span>Loss</span><strong id="reportLoss">Rs 0</strong></article>
+          <article class="report-card"><span>Purchases</span><strong id="reportPurchases">Rs 0</strong></article>
+          <article class="report-card"><span>Stock Value</span><strong id="reportStock">Rs 0</strong></article>
+        </div>
+
+        <section class="panel">
+          <div class="section-head"><h2>Top Selling Items</h2></div>
+          <div id="topSellingList" class="list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head"><h2>Important Checks</h2></div>
+          <div id="reportWarnings" class="list"></div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-nav="dashboard" type="button"><span class="nav-icon">⌂</span><small>Home</small></button>
+      <button class="nav-btn" data-nav="inventory" type="button"><span class="nav-icon">▦</span><small>Stock</small></button>
+      <button class="nav-btn main-entry" data-nav="transactions" type="button"><span class="nav-icon">＋</span><small>Entry</small></button>
+      <button class="nav-btn" data-nav="khata" type="button"><span class="nav-icon">◎</span><small>Khata</small></button>
+      <button class="nav-btn" data-nav="reports" type="button"><span class="nav-icon">▥</span><small>Reports</small></button>
+    </nav>
+  </div>
+
+  <dialog id="modal">
+    <form method="dialog" id="dynamicForm" class="modal-card">
+      <div class="modal-head">
+        <div><p class="eyebrow" id="modalEyebrow">ENTRY</p><h2 id="modalTitle">Add Entry</h2></div>
+        <button class="close-btn" id="closeModalBtn" type="button">✕</button>
+      </div>
+      <div id="modalBody"></div>
+      <p id="formMessage" class="error-text"></p>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="cancelModalBtn" type="button">Cancel</button>
+        <button class="primary-btn" id="saveModalBtn" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js?v=cloud-final-1"></script>
+  <script src="app.js?v=brand-final-2"></script>
+</body>
+</html>
