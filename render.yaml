@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: master-super-store-assistant
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+    disk:
+      name: master-super-store-data
+      mountPath: /var/data
+      sizeGB: 1
