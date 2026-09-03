@@ -1,121 +1,88 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const makeId=()=> (crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+const makeId=()=> (globalThis.crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
 
 const STORE_NAME="MASTER SUPER STORE";
 const OWNER_NAME="SHOUKAT ALI TAHIR";
-const SHARED_STORE_DOC="master-super-store";
-const LOCAL_STORE_KEY="master_super_store_single_shop_v8";
-let localUpdatedAt=0;
-let cloudUnsubscribe=null;
+const LOCAL_STORE_KEY="master_super_store_single_shop_v10";
 
-const seed={
-  settings:{shopName:STORE_NAME},
-  products:[],
-  transactions:[],
-  customers:[],
-  suppliers:[]
+const SUPABASE_URL="https://cdnxkqjklzcteuojayll.supabase.co";
+const SUPABASE_KEY="sb_publishable_m4gpy-uVfv8Hpld7wfo_Xw_Vh8wUeIO";
+
+const CLOUD_TABLES={
+  products:"mss_products",
+  transactions:"mss_transactions",
+  customers:"mss_customers",
+  suppliers:"mss_suppliers"
 };
 
-let db=freshDB(), reportPeriod="today", formContext=null, saveTimer=null, cloudReady=false;
-let fb=null, auth=null, firestore=null;
+let db=freshDB();
+let reportPeriod="today", formContext=null;
+let supa=null, cloudReady=false, isPersisting=false;
+let lastSyncedDB=freshDB();
+let syncChain=Promise.resolve();
+let realtimeChannel=null;
+let reloadTimer=null;
 
 function freshDB(){
   return {
-    settings:{shopName:STORE_NAME},
+    settings:{shopName:STORE_NAME,ownerName:OWNER_NAME},
     products:[],
     transactions:[],
     customers:[],
     suppliers:[]
   };
 }
+
 function normalizeDB(data){
-  const x=(data && typeof data==="object") ? data : freshDB();
-  x.settings={shopName:STORE_NAME};
+  const x=(data && typeof data==="object") ? structuredClone(data) : freshDB();
+  x.settings={shopName:STORE_NAME,ownerName:OWNER_NAME};
   x.products=Array.isArray(x.products)?x.products:[];
   x.transactions=Array.isArray(x.transactions)?x.transactions:[];
   x.customers=Array.isArray(x.customers)?x.customers:[];
   x.suppliers=Array.isArray(x.suppliers)?x.suppliers:[];
-  x.products.forEach(p=>{if(p.active===undefined)p.active=true});
+  x.products.forEach(p=>{
+    if(p.active===undefined)p.active=true;
+    p.stock=Number(p.stock||0);
+    p.avgCost=Number(p.avgCost||0);
+    p.salePrice=Number(p.salePrice||0);
+    p.minStock=Number(p.minStock||0);
+  });
+  x.customers.forEach(c=>c.balance=Number(c.balance||0));
+  x.suppliers.forEach(s=>s.balance=Number(s.balance||0));
   return x;
 }
-function loadLocalEnvelope(){
+
+function hasUsefulData(x){
+  return !!(x?.products?.length || x?.transactions?.length || x?.customers?.length || x?.suppliers?.length);
+}
+
+function loadLocalData(){
   try{
-    const raw=localStorage.getItem(LOCAL_STORE_KEY);
+    const raw=localStorage.getItem(LOCAL_STORE_KEY)
+      || localStorage.getItem("master_super_store_single_shop_v8");
     if(!raw)return null;
     const parsed=JSON.parse(raw);
-    if(parsed?.data)return {data:normalizeDB(parsed.data),updatedAt:Number(parsed.updatedAt||0)};
-    return {data:normalizeDB(parsed),updatedAt:0};
+    return normalizeDB(parsed?.data||parsed);
   }catch(err){
     console.warn("Local data read failed",err);
     return null;
   }
 }
+
 function saveLocalData(){
   try{
-    localUpdatedAt=Date.now();
-    localStorage.setItem(LOCAL_STORE_KEY,JSON.stringify({data:db,updatedAt:localUpdatedAt}));
+    localStorage.setItem(LOCAL_STORE_KEY,JSON.stringify(db));
   }catch(err){
     console.warn("Local data save failed",err);
   }
 }
+
 function setSyncStatus(state,text){
   const el=$("#syncStatus");if(!el)return;
   el.className="sync-status "+state;
-  el.innerHTML=`<span></span> ${text}`;
-}
-function firebaseConfigReady(){
-  const c=window.MSS_FIREBASE_CONFIG||{};
-  return c.apiKey && !String(c.apiKey).includes("PASTE_") &&
-         c.projectId && !String(c.projectId).includes("PASTE_");
-}
-function initFirebase(){
-  if(!window.firebase){
-    setSyncStatus("local","Device Saved");
-    return false;
-  }
-  if(!firebaseConfigReady()){
-    setSyncStatus("local","Device Saved");
-    return false;
-  }
-  try{
-    fb=firebase.apps.length?firebase.app():firebase.initializeApp(window.MSS_FIREBASE_CONFIG);
-    auth=firebase.auth();
-    firestore=firebase.firestore();
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
-    return true;
-  }catch(err){
-    console.error(err);
-    setSyncStatus("local","Device Saved");
-    return false;
-  }
-}
-function sharedStoreRef(){
-  return firestore.collection("stores").doc(SHARED_STORE_DOC);
-}
-function queueCloudSave(){
-  if(!cloudReady||!firestore)return;
-  clearTimeout(saveTimer);
-  setSyncStatus("syncing","Saving");
-  saveTimer=setTimeout(saveCloudData,450);
-}
-async function saveCloudData(){
-  if(!cloudReady||!firestore)return;
-  try{
-    await sharedStoreRef().set({
-      data:db,
-      ownerName:OWNER_NAME,
-      shopName:STORE_NAME,
-      clientUpdatedAt:localUpdatedAt||Date.now(),
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
-    setSyncStatus("synced","Cloud Saved");
-  }catch(err){
-    console.error(err);
-    setSyncStatus("local","Device Saved");
-  }
+  el.innerHTML=`<span></span><b>${text}</b>`;
 }
 
-function saveDB(){saveLocalData();syncBrand();renderAll();queueCloudSave()}
 function money(v){return "Rs "+Number(v||0).toLocaleString("en-PK",{maximumFractionDigits:2})}
 function num(v){return Number(v||0)}
 function todayISO(){
@@ -127,115 +94,229 @@ function fmt(d){return new Date((d||todayISO())+"T12:00:00").toLocaleDateString(
 function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function getProduct(id){return db.products.find(p=>p.id===id)}
 function matchPeriod(t,p){const d=t.date||t.createdAt?.slice(0,10);return p==="today"?d===todayISO():p==="month"?d?.slice(0,7)===monthISO():true}
-function productOptions(selected=""){return db.products.filter(p=>p.active!==false || p.id===selected).map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.name)} — ${p.stock} ${esc(p.unit)}</option>`).join("")}
+function productOptions(selected=""){
+  return db.products
+    .filter(p=>p.active!==false || p.id===selected)
+    .map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.name)} — ${p.stock} ${esc(p.unit)}</option>`)
+    .join("");
+}
 
 function syncBrand(){
   document.title=STORE_NAME;
   $("#headerStoreName") && ($("#headerStoreName").textContent=STORE_NAME);
 }
+
 function navigate(v){
   $$(".view").forEach(x=>x.classList.toggle("active",x.dataset.view===v));
   $$(".nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.nav===v));
-  window.scrollTo({top:0,behavior:"smooth"});
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
 }
 
-async function loadSharedStore(){
-  setSyncStatus("syncing","Syncing");
-  const ref=sharedStoreRef();
-  const snap=await ref.get();
-  const local=loadLocalEnvelope();
-  const remote=snap.exists?snap.data():null;
-  const remoteTime=Number(remote?.clientUpdatedAt||0);
-  const localTime=Number(local?.updatedAt||0);
+function initCloud(){
+  if(!window.supabase?.createClient){
+    setSyncStatus("local","Device Saved");
+    return false;
+  }
+  try{
+    supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+      auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
+      realtime:{params:{eventsPerSecond:5}}
+    });
+    return true;
+  }catch(err){
+    console.error(err);
+    setSyncStatus("local","Device Saved");
+    return false;
+  }
+}
 
-  if(remote?.data && remoteTime>=localTime){
-    db=normalizeDB(remote.data);
-    localUpdatedAt=remoteTime||Date.now();
-    localStorage.setItem(LOCAL_STORE_KEY,JSON.stringify({data:db,updatedAt:localUpdatedAt}));
-  }else if(local?.data){
-    db=normalizeDB(local.data);
-    localUpdatedAt=localTime||Date.now();
-    await ref.set({
-      data:db,
-      ownerName:OWNER_NAME,
-      shopName:STORE_NAME,
-      clientUpdatedAt:localUpdatedAt,
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
-  }else{
-    db=freshDB();
-    saveLocalData();
-    await ref.set({
-      data:db,
-      ownerName:OWNER_NAME,
-      shopName:STORE_NAME,
-      clientUpdatedAt:localUpdatedAt,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
+async function cloudSelect(table){
+  const {data,error}=await supa.from(table).select("id,data,updated_at");
+  if(error)throw error;
+  return data||[];
+}
+
+async function loadCloudDB(){
+  const [products,transactions,customers,suppliers,settings] = await Promise.all([
+    cloudSelect(CLOUD_TABLES.products),
+    cloudSelect(CLOUD_TABLES.transactions),
+    cloudSelect(CLOUD_TABLES.customers),
+    cloudSelect(CLOUD_TABLES.suppliers),
+    cloudSelect("mss_settings")
+  ]);
+  const settingRow=settings.find(x=>x.id==="master-super-store");
+  return normalizeDB({
+    settings:settingRow?.data||{shopName:STORE_NAME,ownerName:OWNER_NAME},
+    products:products.map(x=>x.data),
+    transactions:transactions.map(x=>x.data),
+    customers:customers.map(x=>x.data),
+    suppliers:suppliers.map(x=>x.data)
+  });
+}
+
+function mapById(list){return new Map((list||[]).map(x=>[x.id,x]))}
+function sameRecord(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+
+async function syncCollection(table,beforeList,nextList){
+  const before=mapById(beforeList), next=mapById(nextList);
+  const changed=[];
+  const removed=[];
+  const now=new Date().toISOString();
+
+  for(const [id,item] of next){
+    if(!before.has(id) || !sameRecord(before.get(id),item)){
+      changed.push({id,data:item,updated_at:now});
+    }
+  }
+  for(const id of before.keys()){
+    if(!next.has(id))removed.push(id);
   }
 
-  cloudReady=true;
+  if(changed.length){
+    const {error}=await supa.from(table).upsert(changed,{onConflict:"id"});
+    if(error)throw error;
+  }
+  if(removed.length){
+    const {error}=await supa.from(table).delete().in("id",removed);
+    if(error)throw error;
+  }
+}
+
+async function persistSnapshot(snapshot){
+  if(!cloudReady||!supa)return;
+  isPersisting=true;
+  setSyncStatus("syncing","Saving");
+  try{
+    const before=lastSyncedDB;
+    await syncCollection(CLOUD_TABLES.products,before.products,snapshot.products);
+    await syncCollection(CLOUD_TABLES.transactions,before.transactions,snapshot.transactions);
+    await syncCollection(CLOUD_TABLES.customers,before.customers,snapshot.customers);
+    await syncCollection(CLOUD_TABLES.suppliers,before.suppliers,snapshot.suppliers);
+
+    const {error:settingsError}=await supa.from("mss_settings").upsert({
+      id:"master-super-store",
+      data:{shopName:STORE_NAME,ownerName:OWNER_NAME},
+      updated_at:new Date().toISOString()
+    },{onConflict:"id"});
+    if(settingsError)throw settingsError;
+
+    lastSyncedDB=normalizeDB(snapshot);
+    setSyncStatus("synced","Cloud Saved");
+  }catch(err){
+    console.error("Cloud save failed",err);
+    setSyncStatus("local","Device Saved");
+  }finally{
+    isPersisting=false;
+  }
+}
+
+function queueCloudSave(){
+  if(!cloudReady||!supa)return;
+  const snapshot=normalizeDB(db);
+  syncChain=syncChain.then(()=>persistSnapshot(snapshot)).catch(err=>{
+    console.error(err);
+    setSyncStatus("local","Device Saved");
+  });
+}
+
+function saveDB(){
+  saveLocalData();
   syncBrand();
   renderAll();
-  setSyncStatus("synced","Cloud Saved");
+  queueCloudSave();
+}
 
-  if(cloudUnsubscribe)cloudUnsubscribe();
-  cloudUnsubscribe=ref.onSnapshot(doc=>{
-    const rd=doc.data();
-    const stamp=Number(rd?.clientUpdatedAt||0);
-    if(rd?.data && stamp>localUpdatedAt){
-      db=normalizeDB(rd.data);
-      localUpdatedAt=stamp;
-      localStorage.setItem(LOCAL_STORE_KEY,JSON.stringify({data:db,updatedAt:localUpdatedAt}));
-      renderAll();
-      setSyncStatus("synced","Cloud Updated");
-    }
-  },err=>console.warn("Live cloud sync unavailable",err));
+async function uploadWholeDB(source){
+  const empty=freshDB();
+  lastSyncedDB=empty;
+  await persistSnapshot(normalizeDB(source));
+}
+
+async function reloadFromCloud(){
+  if(!cloudReady||isPersisting)return;
+  try{
+    const remote=await loadCloudDB();
+    db=remote;
+    lastSyncedDB=normalizeDB(remote);
+    saveLocalData();
+    renderAll();
+    setSyncStatus("synced","Cloud Updated");
+  }catch(err){
+    console.error("Cloud reload failed",err);
+    setSyncStatus("local","Device Saved");
+  }
+}
+
+function scheduleCloudReload(){
+  if(isPersisting)return;
+  clearTimeout(reloadTimer);
+  reloadTimer=setTimeout(reloadFromCloud,300);
+}
+
+function startRealtime(){
+  if(!supa)return;
+  if(realtimeChannel)supa.removeChannel(realtimeChannel);
+  realtimeChannel=supa.channel("master-super-store-live-v10");
+  for(const table of [...Object.values(CLOUD_TABLES),"mss_settings"]){
+    realtimeChannel.on(
+      "postgres_changes",
+      {event:"*",schema:"public",table},
+      ()=>scheduleCloudReload()
+    );
+  }
+  realtimeChannel.subscribe(status=>{
+    if(status==="SUBSCRIBED")setSyncStatus("synced","Cloud Live");
+  });
 }
 
 async function startSingleShop(){
   syncBrand();
 
-  const local=loadLocalEnvelope();
-  if(local?.data){
-    db=normalizeDB(local.data);
-    localUpdatedAt=local.updatedAt||0;
-  }else{
-    db=freshDB();
-    saveLocalData();
-  }
+  const local=loadLocalData();
+  db=local||freshDB();
+  saveLocalData();
   renderAll();
 
-  if(!initFirebase()){
-    setSyncStatus("local","Device Saved");
-    return;
-  }
+  if(!initCloud())return;
 
+  setSyncStatus("syncing","Connecting");
   try{
-    if(!auth.currentUser)await auth.signInAnonymously();
-    await loadSharedStore();
+    const remote=await loadCloudDB();
 
-    document.addEventListener("visibilitychange",async()=>{
-      if(document.visibilityState==="visible" && cloudReady){
-        try{await loadSharedStore()}
-        catch(err){
-          console.error(err);
-          setSyncStatus("local","Device Saved");
-        }
-      }
+    if(hasUsefulData(remote)){
+      db=remote;
+      lastSyncedDB=normalizeDB(remote);
+      saveLocalData();
+    }else if(hasUsefulData(db)){
+      cloudReady=true;
+      await uploadWholeDB(db);
+      lastSyncedDB=normalizeDB(db);
+    }else{
+      lastSyncedDB=normalizeDB(remote);
+    }
+
+    cloudReady=true;
+    renderAll();
+    setSyncStatus("synced","Cloud Live");
+    startRealtime();
+
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState==="visible")scheduleCloudReload();
     },{passive:true});
+    window.addEventListener("focus",scheduleCloudReload,{passive:true});
   }catch(err){
-    console.error(err);
+    console.error("Cloud connection failed",err);
+    cloudReady=false;
     setSyncStatus("local","Device Saved");
   }
 }
-
 function activityRow(t){
   const names={sale:"Sale",purchase:"Purchase",home:"Home Use",loss:"Loss",expense:"Expense",adjustment:"Stock Adjustment",customer_payment:"Customer Payment",supplier_payment:"Supplier Payment"};
   const p=getProduct(t.productId);
-  const party=t.customerId?db.customers.find(c=>c.id===t.customerId)?.name:t.supplierId?db.suppliers.find(s=>s.id===t.supplierId)?.name:"";
-  return `<div class="row-item activity-row"><div class="row-main"><strong>${names[t.type]||"Activity"}${p?" · "+esc(p.name):""}</strong><small>${fmt(t.date)}${party?" · "+esc(party):""}${t.note?" · "+esc(t.note):""}</small></div><div class="row-end"><span class="${["sale","customer_payment"].includes(t.type)?"amount-positive":"amount-negative"}">${money(t.total??t.value??0)}</span><button class="mini-delete" data-delete-transaction="${t.id}" type="button" aria-label="Delete transaction" title="Delete entry">×</button></div></div>`
+  const productName=p?.name||t.productName||"";
+  const party=t.customerId?(db.customers.find(c=>c.id===t.customerId)?.name||t.customerName||""):t.supplierId?(db.suppliers.find(s=>s.id===t.supplierId)?.name||t.supplierName||""):"";
+  return `<div class="row-item activity-row"><div class="row-main"><strong>${names[t.type]||"Activity"}${productName?" · "+esc(productName):""}</strong><small>${fmt(t.date)}${party?" · "+esc(party):""}${t.note?" · "+esc(t.note):""}</small></div><div class="row-end"><span class="${["sale","customer_payment"].includes(t.type)?"amount-positive":"amount-negative"}">${money(t.total??t.value??0)}</span><button class="mini-delete" data-delete-transaction="${t.id}" type="button" aria-label="Delete transaction" title="Delete entry">×</button></div></div>`
 }
 function renderDashboard(){
   const tx=db.transactions.filter(t=>matchPeriod(t,"today"));
@@ -283,10 +364,13 @@ function renderTransactions(){
   const names={sale:"Sale",purchase:"Purchase",home:"Home Use",loss:"Loss",expense:"Expense",adjustment:"Stock Adjustment",customer_payment:"Customer Payment",supplier_payment:"Supplier Payment"};
   $("#transactionList").innerHTML=list.length?list.map(t=>{
     const p=getProduct(t.productId);
+    const productName=p?.name||t.productName||"";
     const c=t.customerId?db.customers.find(x=>x.id===t.customerId):null;
     const s=t.supplierId?db.suppliers.find(x=>x.id===t.supplierId):null;
+    const customerName=c?.name||t.customerName||"";
+    const supplierName=s?.name||t.supplierName||"";
     return `<article class="activity-card">
-      <div class="activity-top"><div><strong>${names[t.type]||t.type}</strong><div class="activity-meta">${fmt(t.date)}${p?" · "+esc(p.name):""}${c?" · "+esc(c.name):""}${s?" · "+esc(s.name):""}</div></div><span class="badge">${money(t.total??t.value??0)}</span></div>
+      <div class="activity-top"><div><strong>${names[t.type]||t.type}</strong><div class="activity-meta">${fmt(t.date)}${productName?" · "+esc(productName):""}${customerName?" · "+esc(customerName):""}${supplierName?" · "+esc(supplierName):""}</div></div><span class="badge">${money(t.total??t.value??0)}</span></div>
       ${t.quantity?`<div class="product-bottom"><span>Qty <b>${t.quantity}</b></span>${t.rate?`<span>Rate <b>${money(t.rate)}</b></span>`:""}${t.profit!==undefined?`<span>Profit <b>${money(t.profit)}</b></span>`:""}</div>`:""}
       <div class="small-actions transaction-actions">${["sale","purchase","home","loss","expense","adjustment","customer_payment","supplier_payment"].includes(t.type)?`<button class="small-btn" data-edit-transaction="${t.id}" type="button">Edit</button>`:""}<button class="small-btn danger-action" data-delete-transaction="${t.id}" type="button">Delete Entry</button></div>
     </article>`
@@ -340,20 +424,39 @@ function sf(label,name,options,o={}){return `<div class="form-group${o.full?" fu
 function openModal(kind,ctx={}){
   formContext={kind,ctx};$("#formMessage").textContent="";const b=$("#modalBody"), t=$("#modalTitle");const d=todayISO();
   if(kind==="product"){const p=ctx.product||{};t.textContent=p.id?"Edit Product":"Add Product";b.innerHTML=`<div class="form-grid">${f("Product Name","name","text",{required:true,value:p.name||""})}${f("Category","category","text",{required:true,value:p.category||"Grocery"})}${sf("Unit","unit",["KG","Gram","Liter","ML","Piece","Packet","Box","Dozen","Carton","Bag","Bottle","Tin","Pouch"].map(u=>`<option ${p.unit===u?"selected":""}>${u}</option>`).join(""))}${p.id?`<div class="form-group"><div class="balance-info"><span>Current Stock</span><strong>${p.stock} ${esc(p.unit)}</strong><small>Use Adjust Stock to change quantity so history stays correct.</small></div></div>`:f("Opening Stock","stock","number",{required:true,min:0,step:"0.01",value:p.stock??0})}${f("Purchase Cost","avgCost","number",{required:true,min:0,step:"0.01",value:p.avgCost??0})}${f("Sale Price","salePrice","number",{required:true,min:0,step:"0.01",value:p.salePrice??0})}${f("Low Stock Alert","minStock","number",{required:true,min:0,step:"0.01",value:p.minStock??0})}</div>`}
-  if(kind==="udhar_sale"){
-    t.textContent="Quick Udhar Sale";
+  if(["sale","purchase","home","loss","adjustment"].includes(kind)){
     const pf=ctx.prefill||{};
-    b.innerHTML=`<div class="udhar-callout"><div class="udhar-callout-icon">U</div><div><strong>Fast Udhar Entry</strong><small>Select customer, item and quantity. Balance updates automatically.</small></div></div>
-    <div class="form-grid">
-      ${sf("Customer","customerId",`<option value="">Select customer</option>${db.customers.map(c=>`<option value="${c.id}" ${(ctx.customerId||pf.customerId)===c.id?"selected":""}>${esc(c.name)} — ${money(c.balance)}</option>`).join("")}`,{required:true,full:true})}
-      ${sf("Product","productId",productOptions(ctx.productId||pf.productId),{required:true,full:true})}
+    t.textContent={sale:"Add Sale",purchase:"Add Purchase",home:"Home Use",loss:"Loss / Wastage",adjustment:"Adjust Stock"}[kind];
+    const paymentValue=pf.paymentType||ctx.paymentType||"cash";
+    const customerValue=ctx.customerId||pf.customerId||"";
+    const purchaseType=pf.purchaseType||"cash";
+
+    b.innerHTML=`<div class="form-grid">
+      ${sf("Product","productId",`<option value="">Select product</option>${productOptions(ctx.productId||pf.productId)}`,{required:true,full:true})}
       ${f("Date","date","date",{required:true,value:pf.date||d})}
-      ${f("Quantity","quantity","number",{required:true,min:0.01,step:"0.01",value:pf.quantity||""})}
-      ${f("Sale Rate","rate","number",{min:0,step:"0.01",value:pf.rate||""})}
-    </div>
-    ${db.customers.length?`<p class="form-hint">Tip: Customer balance is shown beside the name. This sale will be added directly to their khata.</p>`:`<p class="error-text">Add a customer first before making an udhar sale.</p>`}`;
+      ${f(kind==="adjustment"?"Actual Stock":"Quantity","quantity","number",{required:true,min:kind==="adjustment"?0:0.01,step:"0.01",value:pf.quantity??""})}
+      ${kind==="sale"?f("Sale Rate","rate","number",{min:0,step:"0.01",value:pf.rate??""}):""}
+      ${kind==="purchase"?f("Purchase Rate","rate","number",{min:0,step:"0.01",required:true,value:pf.rate??""}):""}
+      ${kind==="sale"?sf("Payment Type","paymentType",`<option value="cash" ${paymentValue==="cash"?"selected":""}>Cash</option><option value="udhar" ${paymentValue==="udhar"?"selected":""}>Udhar / Credit</option>`,{full:true}):""}
+      ${kind==="sale"?`<div class="form-group full sale-customer-group"><label>Customer</label><select name="customerId"><option value="">Select customer</option>${db.customers.map(c=>`<option value="${c.id}" ${customerValue===c.id?"selected":""}>${esc(c.name)} — ${money(c.balance)}</option>`).join("")}</select><small class="field-help">Required only for Udhar sale.</small></div>`:""}
+      ${kind==="purchase"?sf("Purchase Type","purchaseType",`<option value="cash" ${purchaseType==="cash"?"selected":""}>Cash</option><option value="credit" ${purchaseType==="credit"?"selected":""}>Credit / Pay Later</option>`,{full:true}):""}
+      ${kind==="purchase"?sf("Supplier","supplierId",`<option value="">No supplier</option>${db.suppliers.map(s=>`<option value="${s.id}" ${(pf.supplierId||"")===s.id?"selected":""}>${esc(s.name)} — ${money(s.balance)}</option>`).join("")}`,{full:true}):""}
+      ${kind==="loss"?sf("Reason","reason",["Expired","Damaged","Broken","Leakage","Missing","Theft","Other"].map(x=>`<option ${pf.note===x?"selected":""}>${x}</option>`).join("")):""}
+    </div>`;
+
+    if(kind==="sale"){
+      const pay=b.querySelector('[name="paymentType"]');
+      const customerGroup=b.querySelector(".sale-customer-group");
+      const customer=b.querySelector('[name="customerId"]');
+      const updateCustomerField=()=>{
+        const udhar=pay?.value==="udhar";
+        customerGroup?.classList.toggle("conditional-hidden",!udhar);
+        if(customer)customer.required=!!udhar;
+      };
+      pay?.addEventListener("change",updateCustomerField);
+      updateCustomerField();
+    }
   }
-  if(["sale","purchase","home","loss","adjustment"].includes(kind)){const pf=ctx.prefill||{};t.textContent={sale:"Add Sale",purchase:"Add Purchase",home:"Home Use",loss:"Loss / Wastage",adjustment:"Adjust Stock"}[kind];b.innerHTML=`<div class="form-grid">${sf("Product","productId",productOptions(ctx.productId||pf.productId),{required:true,full:true})}${f("Date","date","date",{required:true,value:pf.date||d})}${f(kind==="adjustment"?"Actual Stock":"Quantity","quantity","number",{required:true,min:0,step:"0.01",value:pf.quantity||""})}${kind==="sale"?f("Sale Rate","rate","number",{min:0,step:"0.01",value:pf.rate||""}):""}${kind==="purchase"?f("Purchase Rate","rate","number",{min:0,step:"0.01",required:true,value:pf.rate||""}):""}${kind==="sale"?sf("Payment Type","paymentType",`<option value="cash" ${(pf.paymentType||"cash")==="cash"?"selected":""}>Cash</option><option value="udhar" ${pf.paymentType==="udhar"?"selected":""}>Udhar / Credit</option>`):""}${kind==="sale"?sf("Customer","customerId",`<option value="">Select customer</option>${db.customers.map(c=>`<option value="${c.id}" ${(ctx.customerId||pf.customerId)===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}`,{full:true}):""}${kind==="purchase"?sf("Supplier","supplierId",`<option value="">Cash / No supplier</option>${db.suppliers.map(s=>`<option value="${s.id}" ${(pf.supplierId||"")===s.id?"selected":""}>${esc(s.name)}</option>`).join("")}`,{full:true}):""}${kind==="purchase"?sf("Purchase Type","purchaseType",`<option value="cash" ${pf.purchaseType==="cash"?"selected":""}>Cash</option><option value="credit" ${pf.purchaseType==="credit"?"selected":""}>Credit / Pay Later</option>`):""}${kind==="loss"?sf("Reason","reason",["Expired","Damaged","Broken","Leakage","Missing","Theft","Other"].map(x=>`<option ${pf.note===x?"selected":""}>${x}</option>`).join("")):""}</div>`}
   if(kind==="expense"){const pf=ctx.prefill||{};const raw=(pf.note||"").split(" · ");const cat=raw[0]||"Miscellaneous", note=raw.slice(1).join(" · ");t.textContent="Add Expense";b.innerHTML=`<div class="form-grid">${f("Date","date","date",{required:true,value:pf.date||d})}${sf("Category","category",["Electricity","Rent","Transport","Loading","Labour","Fuel","Repair","Mobile","Bags","Miscellaneous"].map(x=>`<option ${x===cat?"selected":""}>${x}</option>`).join(""))}${f("Amount","amount","number",{required:true,min:0,step:"0.01",value:pf.total||""})}${f("Note","note","text",{full:true,value:note})}</div>`}
   if(kind==="customer"){const c=ctx.customer||{};t.textContent=c.id?"Edit Customer":"Add Customer";b.innerHTML=`<div class="form-grid">${f("Customer Name","name","text",{required:true,value:c.name||""})}${f("Phone","phone","text",{value:c.phone||""})}${c.id?`<div class="form-group full"><div class="balance-info"><span>Current Balance</span><strong>${money(c.balance)}</strong><small>Balance is changed through Udhar Sale / Receive Payment, not from profile edit.</small></div></div>`:f("Opening Balance","balance","number",{min:0,step:"0.01",value:0})}</div>`}
   if(kind==="supplier"){const s=ctx.supplier||{};t.textContent=s.id?"Edit Supplier":"Add Supplier";b.innerHTML=`<div class="form-grid">${f("Supplier Name","name","text",{required:true,value:s.name||""})}${f("Phone","phone","text",{value:s.phone||""})}${s.id?`<div class="form-group full"><div class="balance-info"><span>Current Payable</span><strong>${money(s.balance)}</strong><small>Payable is changed through credit purchases / supplier payments.</small></div></div>`:f("Opening Balance","balance","number",{min:0,step:"0.01",value:0})}</div>`}
@@ -431,7 +534,7 @@ function editTransaction(id){
 
   const common={editTransactionId:old.id,prefill:old};
   if(old.type==="sale"){
-    openModal(old.paymentType==="udhar"?"udhar_sale": "sale",{...common,productId:old.productId,customerId:old.customerId});
+    openModal("sale",{...common,productId:old.productId,customerId:old.customerId,paymentType:old.paymentType});
   }else if(old.type==="customer_payment"){
     openModal("customer_payment",{...common,id:old.customerId});
   }else if(old.type==="supplier_payment"){
@@ -465,19 +568,6 @@ function saveForm(fd){
         db.products.push({id:makeId(),active:true,stock:num(fd.get("stock")),...base});
       }
     }
-
-    else if(kind==="udhar_sale"){
-      const p=getProduct(fd.get("productId")), c=db.customers.find(x=>x.id===fd.get("customerId"));
-      if(!p)throw Error("Please select a product.");
-      if(!c)throw Error("Please select a customer.");
-      const q=num(fd.get("quantity"));if(q<=0)throw Error("Quantity must be greater than 0.");
-      if(q>num(p.stock))throw Error(`Only ${p.stock} ${p.unit} available in stock.`);
-      const rate=num(fd.get("rate"))||num(p.salePrice);if(rate<0)throw Error("Sale rate is invalid.");
-      const total=q*rate,cost=q*num(p.avgCost),profit=total-cost;
-      p.stock=num(p.stock)-q;c.balance=num(c.balance)+total;
-      db.transactions.push({id:makeId(),type:"sale",productId:p.id,productName:p.name,unit:p.unit,quantity:q,rate,total,cost,profit,date:fd.get("date"),createdAt:now,paymentType:"udhar",customerId:c.id,customerName:c.name});
-    }
-
     else if(["sale","purchase","home","loss","adjustment"].includes(kind)){
       const p=getProduct(fd.get("productId"));if(!p)throw Error("Please select a product.");
       const q=num(fd.get("quantity")), date=fd.get("date");
@@ -586,10 +676,9 @@ document.addEventListener("click",e=>{
     const p=getProduct(dp.dataset.deleteProduct);
     if(p){
       const used=db.transactions.some(t=>t.productId===p.id);
-      const message=used
-        ? `${p.name} has transaction history. Deleting it will remove the product from inventory but keep old transaction amounts in reports. Continue?`
-        : `Delete ${p.name} permanently?`;
-      if(window.confirm(message)){
+      if(used){
+        alert(`${p.name} has transaction history, so it cannot be permanently deleted. Use Deactivate instead.`);
+      }else if(window.confirm(`Delete ${p.name} permanently?`)){
         db.products=db.products.filter(x=>x.id!==p.id);
         saveDB();
       }
@@ -597,7 +686,7 @@ document.addEventListener("click",e=>{
   }
   const ec=e.target.closest("[data-edit-customer]");if(ec){const c=db.customers.find(x=>x.id===ec.dataset.editCustomer);if(c)openModal("customer",{customer:c})}
   const es=e.target.closest("[data-edit-supplier]");if(es){const s=db.suppliers.find(x=>x.id===es.dataset.editSupplier);if(s)openModal("supplier",{supplier:s})}
-  const cs=e.target.closest("[data-customer-sale]");if(cs){navigate("transactions");openModal("udhar_sale",{customerId:cs.dataset.customerSale})}
+  const cs=e.target.closest("[data-customer-sale]");if(cs){navigate("transactions");openModal("sale",{customerId:cs.dataset.customerSale,paymentType:"udhar",prefill:{paymentType:"udhar"}})}
   const cp=e.target.closest("[data-customer-pay]");if(cp)openModal("customer_payment",{id:cp.dataset.customerPay});
   const sp=e.target.closest("[data-supplier-pay]");if(sp)openModal("supplier_payment",{id:sp.dataset.supplierPay});
   const delTx=e.target.closest("[data-delete-transaction]");if(delTx)deleteTransaction(delTx.dataset.deleteTransaction);

@@ -1,10 +1,19 @@
-MOBILE SCREEN V9 CHECK
+MASTER SUPER STORE V10 — FINAL TEST
 
-[ ] Bottom nav shows: Home, Stock, Entry, Khata, Reports
-[ ] Entry button is centered and not cut
-[ ] Device Saved / Cloud Saved is fully visible
-[ ] Settings icon stays inside right edge
-[ ] No horizontal page scrolling
-[ ] OWNER — SHOUKAT ALI TAHIR fits
-[ ] MASTER SUPER STORE fits
-[ ] Transaction cards fit in 2 columns
+1. Upload/overwrite ALL V10 files to GitHub. Do NOT delete old same-name files first.
+2. Wait for GitHub Pages deploy.
+3. On mobile, refresh once. If installed as PWA, close and reopen it.
+4. Status should become Cloud Live.
+5. Add one product on mobile.
+6. On PC open the same website and refresh/focus the tab.
+7. The same product should appear.
+8. Add a customer on PC.
+9. Return to mobile; the customer should appear automatically / on focus.
+10. Confirm page scrolls vertically on Dashboard, Stock, Entry, Khata and Reports.
+
+UI CHECKS
+- One Sale button: Cash / Udhar.
+- Product form: Purchase Cost.
+- Owner: SHOUKAT ALI TAHIR.
+- No horizontal scrolling.
+- All 5 bottom navigation buttons fit.

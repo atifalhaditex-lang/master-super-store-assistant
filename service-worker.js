@@ -1,5 +1,5 @@
-const CACHE="mss-mobile-screen-v9";
-const APP_SHELL=["./","./index.html","./style.css","./app.js","./firebase-config.js","./manifest.webmanifest","./icon-192.svg","./icon-512.svg"];
+const CACHE="mss-proper-v10";
+const APP_SHELL=["./","./index.html","./style.css","./app.js","./manifest.webmanifest","./icon-192.svg","./icon-512.svg"];
 
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(c=>c.addAll(APP_SHELL)));
