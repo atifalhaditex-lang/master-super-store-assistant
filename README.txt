@@ -1,15 +1,10 @@
-MASTER SUPER STORE — FINAL V8 CLEAN
+MASTER SUPER STORE — MOBILE SCREEN FIX V9
 Owner: SHOUKAT ALI TAHIR
 
-- No Login / Create Account.
-- One shared shop.
-- Quick Entry uses ONE Sale button: Cash / Udhar.
-- Product form uses Purchase Cost label.
-- Mobile full-fit layout.
-- Every change saves to browser localStorage immediately.
-- Refresh does not remove data if Firebase is not configured.
-- Firebase is optional for cloud sharing between different phones/networks.
-
-Status:
-Device Saved = saved safely on this phone/browser.
-Cloud Saved = Firebase is connected and shared cloud sync is active.
+Exact correction based on the supplied Android Chrome screenshot:
+- Bottom navigation no longer shifts/cuts off the left side.
+- All 5 bottom buttons fit the mobile width.
+- Device Saved / Cloud Saved status no longer spills outside the screen.
+- Settings button stays inside the header.
+- Header, owner box and content are locked to device width.
+- Existing V8 data/persistence, Sale, Purchase Cost and other functionality retained.

@@ -1,14 +1,10 @@
-FINAL V8 TEST
+MOBILE SCREEN V9 CHECK
 
-[ ] Open site: no login screen
-[ ] MASTER SUPER STORE + SHOUKAT ALI TAHIR correct
-[ ] Mobile has no horizontal scrolling
-[ ] Dashboard Quick Entry has ONE Sale button
-[ ] Transaction Entry has ONE Sale button
-[ ] Sale form lets you choose Cash / Udhar
-[ ] Add Product says Purchase Cost
-[ ] Add product -> refresh -> still saved
-[ ] Add customer -> refresh -> still saved
-[ ] Add sale -> refresh -> still saved
-[ ] If Firebase configured: status shows Cloud Saved
-[ ] On second phone/network: same data appears after Firebase cloud setup
+[ ] Bottom nav shows: Home, Stock, Entry, Khata, Reports
+[ ] Entry button is centered and not cut
+[ ] Device Saved / Cloud Saved is fully visible
+[ ] Settings icon stays inside right edge
+[ ] No horizontal page scrolling
+[ ] OWNER — SHOUKAT ALI TAHIR fits
+[ ] MASTER SUPER STORE fits
+[ ] Transaction cards fit in 2 columns

@@ -1,4 +1,4 @@
-const CACHE="mss-final-v8-clean";
+const CACHE="mss-mobile-screen-v9";
 const APP_SHELL=["./","./index.html","./style.css","./app.js","./firebase-config.js","./manifest.webmanifest","./icon-192.svg","./icon-512.svg"];
 
 self.addEventListener("install",event=>{
