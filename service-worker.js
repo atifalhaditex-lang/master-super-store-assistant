@@ -1,4 +1,4 @@
-const CACHE="mss-proper-v10";
+const CACHE="mss-smart-units-v11";
 const APP_SHELL=["./","./index.html","./style.css","./app.js","./manifest.webmanifest","./icon-192.svg","./icon-512.svg"];
 
 self.addEventListener("install",event=>{

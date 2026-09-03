@@ -790,3 +790,32 @@ dialog{max-height:92dvh}
   }
   .bottom-nav .nav-btn small{font-size:.53rem!important}
 }
+
+
+/* ==========================================================
+   V11 SMART UNITS — KG/GRAM, LITER/ML, PACK PURCHASES
+   ========================================================== */
+.conversion-preview{
+  width:100%;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid #dce7e1;
+  background:#f4f8f6;
+  color:#315947;
+  font-size:.76rem;
+  font-weight:800;
+  line-height:1.45;
+}
+.pack-size-group .field-help,
+.field-help{margin-top:6px}
+@media(max-width:768px){
+  .conversion-preview{
+    font-size:.72rem;
+    padding:10px 11px;
+  }
+  .product-bottom{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:5px!important;
+  }
+}
