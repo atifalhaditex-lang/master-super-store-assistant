@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="110" fill="#0b1220"/>
+<rect x="86" y="116" width="340" height="280" rx="38" fill="#ffffff"/>
+<path d="M120 186h272l-30 70H150z" fill="#0b1220"/>
+<circle cx="184" cy="328" r="28" fill="#0b1220"/>
+<circle cx="330" cy="328" r="28" fill="#0b1220"/>
+<text x="256" y="92" text-anchor="middle" font-size="52" font-family="Arial" font-weight="700" fill="#ffffff">MSS</text>
+</svg>

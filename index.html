@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
+<meta content="no-cache" http-equiv="Pragma"/>
+<meta content="0" http-equiv="Expires"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0" name="viewport"/>
+<meta content="#0f172a" name="theme-color"/>
+<title>MASTER SUPER STORE</title>
+<link href="style.css?v=final-v8-clean" rel="stylesheet"/>
+<link href="./manifest.webmanifest" rel="manifest"/>
+<meta content="#0b1220" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<link href="./icon-192.svg" rel="apple-touch-icon"/>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+<header class="topbar">
+<div class="brand-wrap">
+<div class="premium-owner-box fixed-owner-box" id="accountIdentity">
+<span class="owner-label">OWNER</span>
+<strong class="owner-name">SHOUKAT ALI TAHIR</strong>
+</div>
+<div class="brand-copy">
+<div class="brand-line">
+<p class="eyebrow light">KIRYANA STORE MANAGEMENT</p>
+<span class="live-dot">LIVE</span>
+</div>
+<h1 id="headerStoreName">MASTER SUPER STORE</h1>
+<p class="top-date" id="todayLabel"></p>
+</div>
+</div>
+<div class="header-actions">
+<div aria-live="polite" class="sync-status" id="syncStatus"><span></span> Connecting</div>
+<button aria-label="Store settings" class="icon-btn" id="settingsBtn" title="Store Settings" type="button">
+<span class="gear">⚙</span>
+</button>
+</div>
+</header>
+<main>
+<section class="view active" data-view="dashboard">
+<div class="hero-card">
+<div class="hero-copy">
+<div class="hero-label"><span class="hero-icon">↗</span><span>Today's Sales</span></div>
+<strong id="todaySales">Rs 0</strong>
+<small>Live business performance</small>
+</div>
+<div class="hero-divider hero-copy">
+<div class="hero-label"><span class="hero-icon">◆</span><span>Gross Profit</span></div>
+<strong id="todayProfit">Rs 0</strong>
+<small>Sales minus product cost</small>
+</div>
+</div>
+<div class="stats-grid">
+<article class="stat-card"><div class="stat-icon">▦</div><div><span>Stock Value</span><strong id="stockValue">Rs 0</strong><small>Current inventory cost</small></div></article>
+<article class="stat-card"><div class="stat-icon">⇢</div><div><span>Customer Udhar</span><strong id="customerReceivable">Rs 0</strong><small>Amount receivable</small></div></article>
+<article class="stat-card"><div class="stat-icon">⇠</div><div><span>Supplier Payable</span><strong id="supplierPayable">Rs 0</strong><small>Amount payable</small></div></article>
+<article class="stat-card"><div class="stat-icon">!</div><div><span>Low Stock</span><strong id="lowStockCount">0 items</strong><small>Needs attention</small></div></article>
+</div>
+<section class="panel">
+<div class="section-head"><h2>Quick Entry</h2></div>
+<div class="quick-grid">
+
+<button class="quick-btn sale-primary" data-open-form="sale" type="button"><span class="quick-icon">↗</span><b>Sale</b><small>Cash / Udhar</small></button>
+<button class="quick-btn" data-open-form="purchase" type="button"><span class="quick-icon">↓</span><b>Purchase</b><small>Stock in</small></button>
+<button class="quick-btn" data-open-form="home" type="button"><span class="quick-icon">⌂</span><b>Home Use</b><small>Personal use</small></button>
+<button class="quick-btn" data-open-form="expense" type="button"><span class="quick-icon">−</span><b>Expense</b><small>Shop expense</small></button>
+</div>
+</section>
+<section class="panel">
+<div class="section-head"><h2>Low Stock</h2><button class="text-btn" data-nav="inventory" type="button">View all</button></div>
+<div class="list" id="lowStockList"></div>
+</section>
+<section class="panel">
+<div class="section-head"><h2>Recent Activity</h2></div>
+<div class="list" id="recentActivity"></div>
+</section>
+</section>
+<section class="view" data-view="inventory">
+<div class="section-title-row">
+<div><p class="eyebrow">PRODUCTS</p><h2>Inventory</h2></div>
+<button class="primary-btn" id="addProductBtn" type="button">+ Product</button>
+</div>
+<div class="inventory-tools">
+<input class="search-input" id="inventorySearch" placeholder="Search product, category or unit..." type="search"/>
+<select aria-label="Inventory status" class="filter-select compact-filter" id="inventoryStatusFilter">
+<option value="active">Active Products</option>
+<option value="inactive">Inactive Products</option>
+<option value="all">All Products</option>
+</select>
+</div>
+<div class="stack" id="inventoryList"></div>
+</section>
+<section class="view" data-view="transactions">
+<div class="section-title-row"><div><p class="eyebrow">SHOP ACTIVITY</p><h2>Transactions</h2></div></div>
+<div class="quick-grid entry-grid">
+
+<button class="quick-btn sale-primary" data-open-form="sale" type="button"><span class="quick-icon">↗</span><b>Sale</b><small>Cash / Udhar</small></button>
+<button class="quick-btn" data-open-form="purchase" type="button"><span class="quick-icon">↓</span><b>Purchase</b><small>Stock in</small></button>
+<button class="quick-btn" data-open-form="home" type="button"><span class="quick-icon">⌂</span><b>Home Use</b><small>Personal use</small></button>
+<button class="quick-btn" data-open-form="loss" type="button"><span class="quick-icon">!</span><b>Loss</b><small>Damage / waste</small></button>
+<button class="quick-btn" data-open-form="expense" type="button"><span class="quick-icon">−</span><b>Expense</b><small>Shop expense</small></button>
+<button class="quick-btn" data-open-form="adjustment" type="button"><span class="quick-icon">±</span><b>Adjust</b><small>Stock count</small></button>
+</div>
+<select class="filter-select" id="transactionFilter">
+<option value="all">All Activity</option>
+<option value="sale">Sales</option>
+<option value="purchase">Purchases</option>
+<option value="home">Home Use</option>
+<option value="loss">Loss</option>
+<option value="expense">Expenses</option>
+<option value="adjustment">Adjustments</option>
+</select>
+<div class="stack" id="transactionList"></div>
+</section>
+<section class="view" data-view="khata">
+<div class="section-title-row">
+<div><p class="eyebrow">UDHAR</p><h2>Customer Khata</h2></div>
+<div class="head-actions"><button class="secondary-btn compact-action" data-open-form="sale" type="button">+ Sale</button><button class="primary-btn compact-action" id="addCustomerBtn" type="button">+ Customer</button></div>
+</div>
+<div class="stats-grid two">
+<article class="stat-card"><span>Total Udhar</span><strong id="khataTotal">Rs 0</strong></article>
+<article class="stat-card"><span>Customers</span><strong id="customerCount">0</strong></article>
+</div>
+<div class="stack" id="customerList"></div>
+<div class="section-title-row suppliers-title">
+<div><p class="eyebrow">WHOLESALERS</p><h2>Suppliers</h2></div>
+<button class="primary-btn" id="addSupplierBtn" type="button">+ Supplier</button>
+</div>
+<div class="stack" id="supplierList"></div>
+</section>
+<section class="view" data-view="reports">
+<div class="section-title-row"><div><p class="eyebrow">BUSINESS SUMMARY</p><h2>Reports</h2></div></div>
+<div class="period-tabs">
+<button class="period active" data-period="today" type="button">Today</button>
+<button class="period" data-period="month" type="button">Month</button>
+<button class="period" data-period="all" type="button">All Time</button>
+</div>
+<div class="report-grid">
+<article class="report-card"><span>Sales</span><strong id="reportSales">Rs 0</strong></article>
+<article class="report-card"><span>Gross Profit</span><strong id="reportGross">Rs 0</strong></article>
+<article class="report-card"><span>Expenses</span><strong id="reportExpenses">Rs 0</strong></article>
+<article class="report-card"><span>Net Profit</span><strong id="reportNet">Rs 0</strong></article>
+<article class="report-card"><span>Home Use</span><strong id="reportHome">Rs 0</strong></article>
+<article class="report-card"><span>Loss</span><strong id="reportLoss">Rs 0</strong></article>
+<article class="report-card"><span>Purchases</span><strong id="reportPurchases">Rs 0</strong></article>
+<article class="report-card"><span>Stock Value</span><strong id="reportStock">Rs 0</strong></article>
+</div>
+<section class="panel">
+<div class="section-head"><h2>Top Selling Items</h2></div>
+<div class="list" id="topSellingList"></div>
+</section>
+<section class="panel">
+<div class="section-head"><h2>Important Checks</h2></div>
+<div class="list" id="reportWarnings"></div>
+</section>
+</section>
+</main>
+<nav class="bottom-nav">
+<button class="nav-btn active" data-nav="dashboard" type="button"><span class="nav-icon">⌂</span><small>Home</small></button>
+<button class="nav-btn" data-nav="inventory" type="button"><span class="nav-icon">▦</span><small>Stock</small></button>
+<button class="nav-btn main-entry" data-nav="transactions" type="button"><span class="nav-icon">＋</span><small>Entry</small></button>
+<button class="nav-btn" data-nav="khata" type="button"><span class="nav-icon">◎</span><small>Khata</small></button>
+<button class="nav-btn" data-nav="reports" type="button"><span class="nav-icon">▥</span><small>Reports</small></button>
+</nav>
+</div>
+<dialog id="modal">
+<form class="modal-card" id="dynamicForm" method="dialog">
+<div class="modal-head">
+<div><p class="eyebrow" id="modalEyebrow">ENTRY</p><h2 id="modalTitle">Add Entry</h2></div>
+<button class="close-btn" id="closeModalBtn" type="button">✕</button>
+</div>
+<div id="modalBody"></div>
+<p class="error-text" id="formMessage"></p>
+<div class="modal-actions">
+<button class="secondary-btn" id="cancelModalBtn" type="button">Cancel</button>
+<button class="primary-btn" id="saveModalBtn" type="submit">Save</button>
+</div>
+</form>
+</dialog>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js?v=final-v8-clean"></script>
+<script src="app.js?v=final-v8-clean"></script>
+</body>
+</html>

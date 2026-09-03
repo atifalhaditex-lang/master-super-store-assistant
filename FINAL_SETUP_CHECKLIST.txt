@@ -1,0 +1,14 @@
+FINAL V8 TEST
+
+[ ] Open site: no login screen
+[ ] MASTER SUPER STORE + SHOUKAT ALI TAHIR correct
+[ ] Mobile has no horizontal scrolling
+[ ] Dashboard Quick Entry has ONE Sale button
+[ ] Transaction Entry has ONE Sale button
+[ ] Sale form lets you choose Cash / Udhar
+[ ] Add Product says Purchase Cost
+[ ] Add product -> refresh -> still saved
+[ ] Add customer -> refresh -> still saved
+[ ] Add sale -> refresh -> still saved
+[ ] If Firebase configured: status shows Cloud Saved
+[ ] On second phone/network: same data appears after Firebase cloud setup
